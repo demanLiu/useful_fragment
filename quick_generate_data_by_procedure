@@ -1,0 +1,30 @@
+delimiter //
+drop procedure if exists generate_data //
+CREATE PROCEDURE `generate_data`(in p int)
+begin   
+declare i int;  
+set i = p;  
+set @head = "insert into bigtable(data,status) values"; 
+set @exedata = "";
+while i>1 do  
+set @exedata = concat(@exedata,'(\'',MD5(RAND()),'\',', FLOOR(1 + (RAND()*100))%2,'),');  
+set i = i-1; 
+if i%10000=0 then          
+set @exedata = left(@exedata,Length(@exedata)-1);         
+set @exesql = concat(@head, @exedata);        
+prepare stmt from @exesql;        
+execute stmt;         
+DEALLOCATE prepare stmt;         
+set @exedata = "";     
+end if; 
+end while;  
+if(length(@exedata)>0)
+then
+set @exedata = left(@exedata,Length(@exedata)-1);         
+set @exesql = concat(@head, @exedata);        
+prepare stmt from @exesql;        
+execute stmt;         
+DEALLOCATE prepare stmt; 
+end if;
+end//
+call generate_data(80000)//
